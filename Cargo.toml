@@ -1,0 +1,8 @@
+[package]
+name = "raytracer"
+version = "0.1.0"
+authors = ["Daniel Coelho <daniel.coelho@4dpipeline.com>"]
+edition = "2018"
+
+[dependencies]
+rand = "0.6.5"
