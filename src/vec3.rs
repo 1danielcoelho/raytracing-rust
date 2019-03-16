@@ -4,6 +4,7 @@ use std::ops::Div;
 use std::ops::DivAssign;
 use std::ops::Mul;
 use std::ops::MulAssign;
+use std::ops::Neg;
 use std::ops::Sub;
 use std::ops::SubAssign;
 
@@ -55,15 +56,15 @@ impl Vec3 {
         };
     }
 
-    pub fn dot(v1: Vec3, v2: Vec3) -> f64 {
-        return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+    pub fn dot(&self, other: &Vec3) -> f64 {
+        return self.x * other.x + self.y * other.y + self.z * other.z;
     }
 
-    pub fn cross(v1: Vec3, v2: Vec3) -> Vec3 {
+    pub fn cross(&self, other: Vec3) -> Vec3 {
         return Vec3 {
-            x: v1.y * v2.z - v1.z * v2.y,
-            y: -(v1.x * v2.z - v1.z * v2.x),
-            z: v1.x * v2.y - v1.y * v2.x,
+            x: self.y * other.z - self.z * other.y,
+            y: -(self.x * other.z - self.z * other.x),
+            z: self.x * other.y - self.y * other.x,
         };
     }
 }
@@ -258,6 +259,30 @@ impl DivAssign<f64> for Vec3 {
             x: self.x / other,
             y: self.y / other,
             z: self.z / other,
+        };
+    }
+}
+
+impl Neg for Vec3 {
+    type Output = Vec3;
+
+    fn neg(self) -> Vec3 {
+        return Vec3 {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+        };
+    }
+}
+
+impl<'a> Neg for &'a Vec3 {
+    type Output = Vec3;
+
+    fn neg(self) -> Vec3 {
+        return Vec3 {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
         };
     }
 }

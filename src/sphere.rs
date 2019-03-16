@@ -25,9 +25,9 @@ impl<'a> Sphere<'a> {
 impl<'a> Hitable for Sphere<'a> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = &ray.orig - &self.center;
-        let a = Vec3::dot(ray.dir, ray.dir);
-        let b = Vec3::dot(oc, ray.dir);
-        let c = Vec3::dot(oc, oc) - self.radius * self.radius;
+        let a = ray.dir.dot(&ray.dir);
+        let b = oc.dot(&ray.dir);
+        let c = oc.dot(&oc) - self.radius * self.radius;
         let discriminant = b * b - a * c;
         if discriminant > 0.0 {
             let t_1 = (-b - (b * b - a * c).sqrt()) / a;

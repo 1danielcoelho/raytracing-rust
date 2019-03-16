@@ -6,11 +6,12 @@ use std::fs;
 
 // This tells it to pull the external library crate raytracer
 extern crate raytracer;
+extern crate open;
 
 // This tells it to use these types defined in the crate
 use raytracer::camera::Camera;
 use raytracer::hitable::{Hitable, HitableList};
-use raytracer::material::{Lambertian, Metal};
+use raytracer::material::{Dielectric, Lambertian, Metal};
 use raytracer::ray::Ray;
 use raytracer::sphere::Sphere;
 use raytracer::vec3::Vec3;
@@ -41,16 +42,17 @@ fn main() {
 
     let mut output = format!("P3\n{} {}\n255\n", nx, ny);
 
-    let l1 = Lambertian::new(Vec3::new(0.8, 0.3, 0.3));
+    let l1 = Lambertian::new(Vec3::new(0.1, 0.2, 0.5));
     let l2 = Lambertian::new(Vec3::new(0.8, 0.8, 0.0));
-    let m1 = Metal::new(Vec3::new(0.8, 0.6, 0.2), 1.0);
-    let m2 = Metal::new(Vec3::new(0.8, 0.8, 0.8), 0.3);
+    let m1 = Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0);
+    let d1 = Dielectric::new(1.5);
 
     let list: Vec<Box<dyn Hitable>> = vec![
         Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5, &l1)),
         Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0, &l2)),
         Box::new(Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5, &m1)),
-        Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5, &m2)),
+        Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5, &d1)),
+        Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), -0.45, &d1)),
     ];
 
     let world = HitableList { list };
@@ -86,4 +88,5 @@ fn main() {
     }
 
     fs::write("test.ppm", output).expect("Failed to write");
+    open::that("test.ppm").expect("Failed to open file");
 }
