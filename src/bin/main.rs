@@ -5,8 +5,8 @@ use std::f64;
 use std::fs;
 
 // This tells it to pull the external library crate raytracer
-extern crate raytracer;
 extern crate open;
+extern crate raytracer;
 
 // This tells it to use these types defined in the crate
 use raytracer::camera::Camera;
@@ -55,9 +55,21 @@ fn main() {
         Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), -0.45, &d1)),
     ];
 
+    // let R = (std::f64::consts::PI / 4.0).cos();
+    // let list: Vec<Box<dyn Hitable>> = vec![
+    //     Box::new(Sphere::new(Vec3::new(-R, 0.0, -1.0), R, &l1)),
+    //     Box::new(Sphere::new(Vec3::new(R, 0.0, -1.0), R, &l2)),
+    // ];
+
     let world = HitableList { list };
 
-    let cam = Camera::new();
+    let cam = Camera::new(
+        Vec3::new(-2.0, 2.0, 1.0),
+        Vec3::new(0.0, 0.0, -1.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        45.0,
+        nx as f64 / ny as f64,
+    );
 
     let mut rng = rand::thread_rng();
 
