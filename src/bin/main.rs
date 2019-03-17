@@ -1,14 +1,14 @@
-// This is a crate root for the executable
-
 use rand::Rng;
 use std::f64;
 use std::fs;
+use std::rc::Rc;
 
-// This tells it to pull the external library crate raytracer
 extern crate open;
 extern crate raytracer;
+extern crate time;
 
-// This tells it to use these types defined in the crate
+use time::PreciseTime;
+
 use raytracer::camera::Camera;
 use raytracer::hitable::{Hitable, HitableList};
 use raytracer::material::{Dielectric, Lambertian, Metal};
@@ -35,40 +35,108 @@ fn color<T: Hitable>(ray: &Ray, world: &T, depth: i32) -> Vec3 {
     }
 }
 
+fn random_scene<'a>() -> HitableList<'a> {
+    let mut list: Vec<Box<dyn Hitable>> = Vec::new();
+
+    // Floor
+    list.push(Box::new(Sphere::new(
+        Vec3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Rc::new(Lambertian::new(Vec3::new(0.5, 0.5, 0.5))),
+    )));
+
+    let mut rng = rand::thread_rng();
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = rng.gen::<f64>();
+            let center = Vec3::new(
+                a as f64 + 0.9 * rng.gen::<f64>(),
+                0.2,
+                b as f64 + 0.9 * rng.gen::<f64>(),
+            );
+
+            if (center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
+                if choose_mat < 0.8 {
+                    // diffuse
+                    list.push(Box::new(Sphere::new(
+                        center,
+                        0.2,
+                        Rc::new(Lambertian::new(Vec3::new(
+                            rng.gen::<f64>() * rng.gen::<f64>(),
+                            rng.gen::<f64>() * rng.gen::<f64>(),
+                            rng.gen::<f64>() * rng.gen::<f64>(),
+                        ))),
+                    )));
+                } else if choose_mat < 0.95 {
+                    // metal
+                    list.push(Box::new(Sphere::new(
+                        center,
+                        0.2,
+                        Rc::new(Metal::new(
+                            Vec3::new(
+                                0.5 * (1.0 + rng.gen::<f64>()),
+                                0.5 * (1.0 + rng.gen::<f64>()),
+                                0.5 * (1.0 + rng.gen::<f64>()),
+                            ),
+                            0.5 * (1.0 + rng.gen::<f64>()),
+                        )),
+                    )));
+                } else {
+                    // glass
+                    list.push(Box::new(Sphere::new(
+                        center,
+                        0.2,
+                        Rc::new(Dielectric::new(1.5)),
+                    )));
+                }
+            }
+        }
+    }
+
+    list.push(Box::new(Sphere::new(
+        Vec3::new(0.0, 1.0, 0.0),
+        1.0,
+        Rc::new(Dielectric::new(1.5)),
+    )));
+
+    list.push(Box::new(Sphere::new(
+        Vec3::new(-4.0, 1.0, 0.0),
+        1.0,
+        Rc::new(Lambertian::new(Vec3::new(0.4, 0.2, 0.1))),
+    )));
+
+    list.push(Box::new(Sphere::new(
+        Vec3::new(4.0, 1.0, 0.0),
+        1.0,
+        Rc::new(Metal::new(Vec3::new(0.7, 0.6, 0.5), 0.0)),
+    )));
+
+    return HitableList { list };
+}
+
 fn main() {
+    let start = PreciseTime::now();
+
     let nx = 200u32;
     let ny = 100u32;
-    let ns = 100u32;
+    let ns = 30000u32;
 
     let mut output = format!("P3\n{} {}\n255\n", nx, ny);
 
-    let l1 = Lambertian::new(Vec3::new(0.1, 0.2, 0.5));
-    let l2 = Lambertian::new(Vec3::new(0.8, 0.8, 0.0));
-    let m1 = Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0);
-    let d1 = Dielectric::new(1.5);
+    let world = random_scene();
 
-    let list: Vec<Box<dyn Hitable>> = vec![
-        Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5, &l1)),
-        Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0, &l2)),
-        Box::new(Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5, &m1)),
-        Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5, &d1)),
-        Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), -0.45, &d1)),
-    ];
-
-    // let R = (std::f64::consts::PI / 4.0).cos();
-    // let list: Vec<Box<dyn Hitable>> = vec![
-    //     Box::new(Sphere::new(Vec3::new(-R, 0.0, -1.0), R, &l1)),
-    //     Box::new(Sphere::new(Vec3::new(R, 0.0, -1.0), R, &l2)),
-    // ];
-
-    let world = HitableList { list };
+    let lookfrom = Vec3::new(12.0, 2.0, 2.9);
+    let lookat = Vec3::new(0.0, 0.0, 0.0);
 
     let cam = Camera::new(
-        Vec3::new(-2.0, 2.0, 1.0),
-        Vec3::new(0.0, 0.0, -1.0),
+        lookfrom,
+        lookat,
         Vec3::new(0.0, 1.0, 0.0),
-        45.0,
+        20.0,
         nx as f64 / ny as f64,
+        0.1,
+        (lookfrom - lookat).length(),
     );
 
     let mut rng = rand::thread_rng();
@@ -98,6 +166,9 @@ fn main() {
             output = output + &format!("{} {} {}\n", ir, ig, ib);
         }
     }
+
+    let end = PreciseTime::now();
+    println!("{} seconds", start.to(end));
 
     fs::write("test.ppm", output).expect("Failed to write");
     open::that("test.ppm").expect("Failed to open file");

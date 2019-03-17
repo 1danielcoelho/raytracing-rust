@@ -1,19 +1,18 @@
+use std::rc::Rc;
+
 use crate::hitable::{HitRecord, Hitable};
 use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
-pub struct Sphere<'a> {
+pub struct Sphere {
     pub center: Vec3,
     pub radius: f64,
-    pub material: &'a Material,
+    pub material: Rc<Material>,
 }
 
-impl<'a> Sphere<'a> {
-    pub fn new<T>(center: Vec3, radius: f64, material: &T) -> Sphere
-    where
-        T: Material + 'a,
-    {
+impl Sphere {
+    pub fn new(center: Vec3, radius: f64, material: Rc<dyn Material>) -> Sphere {
         return Sphere {
             center,
             radius,
@@ -22,7 +21,7 @@ impl<'a> Sphere<'a> {
     }
 }
 
-impl<'a> Hitable for Sphere<'a> {
+impl Hitable for Sphere {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = &ray.orig - &self.center;
         let a = ray.dir.dot(&ray.dir);
@@ -38,7 +37,7 @@ impl<'a> Hitable for Sphere<'a> {
                     t: t_1,
                     p: t_1_p,
                     normal: (t_1_p - self.center) / self.radius,
-                    mat_ptr: self.material,
+                    mat_ptr: self.material.as_ref(),
                 });
             }
 
@@ -50,7 +49,7 @@ impl<'a> Hitable for Sphere<'a> {
                     t: t_2,
                     p: t_2_pt,
                     normal: (t_2_pt - self.center) / self.radius,
-                    mat_ptr: self.material,
+                    mat_ptr: self.material.as_ref(),
                 });
             }
         }
